@@ -1,15 +1,22 @@
 package cr.una.ac.spotfy_sebas_edgar.viewModel
 
+import android.app.Application
 import android.util.Base64
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import cr.una.ac.spotfy_sebas_edgar.Repository.HistorialRepository
+import cr.una.ac.spotfy_sebas_edgar.db.SpotifyDatabase
 import cr.una.ac.spotfy_sebas_edgar.entity.AccessTokenResponse
+import cr.una.ac.spotfy_sebas_edgar.entity.Historial
 import cr.una.ac.spotfy_sebas_edgar.entity.Track
 import cr.una.ac.spotfy_sebas_edgar.entity.TrackResponse
 
 import cr.una.ac.spotfy_sebas_edgar.service.SpotifyService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 import retrofit2.Call
 import retrofit2.Callback
@@ -17,9 +24,13 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-class SpotifyViewModel : ViewModel(){
+class SpotifyViewModel(application: Application) : ViewModel() {
     private var _songs: MutableLiveData<List<Track>> = MutableLiveData()
     var songs: LiveData<List<Track>> = _songs
+
+    private val historialDao = SpotifyDatabase.getDatabase(application, viewModelScope).historialDao()
+    private val historialRepository = HistorialRepository(historialDao)
+    val historial: LiveData<List<Historial>> = historialRepository.historial
 
     private lateinit var apiService: SpotifyService
     private lateinit var spotifyServiceToken: SpotifyService
@@ -96,5 +107,18 @@ class SpotifyViewModel : ViewModel(){
             .build()
 
         apiService = retrofit.create(SpotifyService::class.java)
+    }
+
+     fun insertHistorial(query: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            historialRepository.insert(Historial(query = query))
+        }
+    }
+
+
+    fun deleteAllHistorial() {
+        viewModelScope.launch(Dispatchers.IO) {
+            historialRepository.deleteAll()
+        }
     }
 }

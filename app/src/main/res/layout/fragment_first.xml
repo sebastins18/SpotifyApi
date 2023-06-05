@@ -46,5 +46,14 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toBottomOf="@id/button_first" />
 
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewHistorial"
+            android:layout_width="match_parent"
+            android:layout_height="530dp"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="24dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/button_first" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.core.widget.NestedScrollView>

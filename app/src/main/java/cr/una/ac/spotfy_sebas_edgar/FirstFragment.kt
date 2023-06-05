@@ -10,8 +10,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import cr.una.ac.spotfy_sebas_edgar.adapter.HistorialAdapter
 import cr.una.ac.spotfy_sebas_edgar.adapter.SpotifyAdapter
 import cr.una.ac.spotfy_sebas_edgar.databinding.FragmentFirstBinding
+import cr.una.ac.spotfy_sebas_edgar.entity.Historial
 import cr.una.ac.spotfy_sebas_edgar.entity.Track
 import cr.una.ac.spotfy_sebas_edgar.viewModel.SpotifyViewModel
 import kotlinx.coroutines.Dispatchers
@@ -42,6 +44,8 @@ class FirstFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        spotifyViewModel = ViewModelProvider(requireActivity()).get(SpotifyViewModel::class.java)
+
         binding.buttonSearch.setOnClickListener {
             val query = binding.editTextSearch.text.toString()
             if (query.isNotEmpty()) {
@@ -61,19 +65,35 @@ class FirstFragment : Fragment() {
         listView.adapter = adapter
         listView.layoutManager = LinearLayoutManager(requireContext())
 
-        spotifyViewModel = ViewModelProvider(requireActivity()).get(SpotifyViewModel::class.java)
-
         spotifyViewModel.songs.observe(viewLifecycleOwner) { elements ->
             adapter.updateData(elements as ArrayList<Track>)
             songs = elements
         }
+
+        val historialView = view.findViewById<RecyclerView>(R.id.recyclerViewHistorial) // Asegúrate de cambiar este ID al que corresponda
+        val historial = mutableListOf<Historial>()
+        val historialAdapter = HistorialAdapter(historial) // Asegúrate de que tienes un adaptador para el historial
+        historialView.adapter = historialAdapter
+        historialView.layoutManager = LinearLayoutManager(requireContext())
+
+        binding.editTextSearch.setOnFocusChangeListener { v, hasFocus ->
+            if (hasFocus) {
+                spotifyViewModel.historial.observe(viewLifecycleOwner, { elements ->
+                    historial.clear()
+                    historial.addAll(elements)
+                    historialAdapter.notifyDataSetChanged()
+                })
+            }
+        }
     }
 
     private fun searchSongs(query: String) {
+        spotifyViewModel.insertHistorial(query)
         GlobalScope.launch(Dispatchers.Main) {
             spotifyViewModel.searchSongs(query)
         }
     }
+
 
     override fun onDestroyView() {
         super.onDestroyView()

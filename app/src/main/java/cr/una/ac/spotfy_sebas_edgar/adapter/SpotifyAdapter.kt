@@ -51,9 +51,6 @@ class SpotifyAdapter(private var songs: ArrayList<Track>): RecyclerView.Adapter<
 
                 artistsTextView.text = artistas
 
-
-
-
                 Picasso.get()
                     .load(song.album.images[0].url)
                     .into(albumImageView)
