@@ -3,26 +3,51 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/FirstFragment">
+    app:startDestination="@id/searchFragment">
 
     <fragment
-        android:id="@+id/FirstFragment"
-        android:name="cr.una.ac.spotfy_sebas_edgar.FirstFragment"
-        android:label="@string/first_fragment_label"
-        tools:layout="@layout/fragment_first">
-
-        <action
-            android:id="@+id/action_FirstFragment_to_SecondFragment"
-            app:destination="@id/SecondFragment" />
-    </fragment>
-    <fragment
-        android:id="@+id/SecondFragment"
-        android:name="cr.una.ac.spotfy_sebas_edgar.SecondFragment"
+        android:id="@+id/TrackFragment"
+        android:name="cr.una.ac.spotfy_sebas_edgar.TrackFragment"
         android:label="@string/second_fragment_label"
-        tools:layout="@layout/fragment_second">
+        tools:layout="@layout/fragment_track">
 
         <action
             android:id="@+id/action_SecondFragment_to_FirstFragment"
-            app:destination="@id/FirstFragment" />
+            app:destination="@id/searchFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/searchFragment"
+        android:name="cr.una.ac.spotfy_sebas_edgar.SearchFragment"
+        android:label="fragment_search"
+        tools:layout="@layout/fragment_search" >
+        <action
+            android:id="@+id/action_searchFragment_to_SecondFragment"
+            app:destination="@id/TrackFragment" />
+        <action
+            android:id="@+id/action_searchFragment_to_AlbumFragment"
+            app:destination="@id/AlbumFragment" />
+        <action
+            android:id="@+id/action_searchFragment_to_ArtistFragment"
+            app:destination="@id/ArtistFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/AlbumFragment"
+        android:name="cr.una.ac.spotfy_sebas_edgar.AlbumFragment"
+        android:label="@string/album_fragment_label"
+        tools:layout="@layout/fragment_album">
+
+        <action
+            android:id="@+id/action_AlbumFragment_to_FirstFragment"
+            app:destination="@id/searchFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/ArtistFragment"
+        android:name="cr.ac.una.spotify_caleb_jeff.ArtistFragment"
+        android:label="@string/artist_fragment_label"
+        tools:layout="@layout/fragment_artist">
+
+        <action
+            android:id="@+id/action_ArtistFragment_to_FirstFragment"
+            app:destination="@id/searchFragment" />
     </fragment>
 </navigation>

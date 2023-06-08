@@ -1,23 +1,6 @@
 package cr.una.ac.spotfy_sebas_edgar.viewModel
 
-import android.content.Context
-import android.util.Base64
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-
-import cr.una.ac.spotfy_sebas_edgar.dao.HistoryDAO
-import cr.una.ac.spotfy_sebas_edgar.db.AppDatabase
-
-import cr.una.ac.spotfy_sebas_edgar.entity.AccessTokenResponse
-import cr.una.ac.spotfy_sebas_edgar.entity.Album
-import cr.una.ac.spotfy_sebas_edgar.entity.Cover
-import cr.una.ac.spotfy_sebas_edgar.entity.Historial
-import cr.una.ac.spotfy_sebas_edgar.entity.Track
-import cr.una.ac.spotfy_sebas_edgar.entity.TrackResponse
-
-import cr.una.ac.spotfy_sebas_edgar.service.SpotifyService
-
+import cr.una.ac.spotfy_sebas_edgar.entity.ArtistResponse
 
 import retrofit2.Call
 import retrofit2.Callback
@@ -25,20 +8,23 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-class SpotifyViewModel() :ViewModel() {
+import android.util.Base64
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import cr.una.ac.spotfy_sebas_edgar.entity.AccessTokenResponse
+import cr.una.ac.spotfy_sebas_edgar.entity.Album
+import cr.una.ac.spotfy_sebas_edgar.entity.Cover
+import cr.una.ac.spotfy_sebas_edgar.entity.Track
+import cr.una.ac.spotfy_sebas_edgar.service.SpotifyService
+
+class ArtistSearchViewmodel: ViewModel() {
 
     private var _tracks: MutableLiveData<List<Track>> = MutableLiveData()
     var tracks : LiveData<List<Track>> = _tracks
 
-    private var _history: MutableLiveData<List<Historial>> = MutableLiveData()
-    var history : LiveData<List<Historial>> = _history
-
-    private lateinit var historyDAO : HistoryDAO
-
     private var _errorMessage: MutableLiveData<String> = MutableLiveData()
     var errorMessage: LiveData<String> = _errorMessage
-
-    private var albumURL = ""
 
     private fun displayErrorMessage(message: String) {
         _errorMessage.value = message
@@ -83,23 +69,22 @@ class SpotifyViewModel() :ViewModel() {
 
                     if (accessToken != null) {
 
-                        val searchRequest = spotifyService.searchTrack("Bearer $accessToken", query)
-                        searchRequest.enqueue(object : Callback<TrackResponse> {
-                            override fun onResponse(call: Call<TrackResponse>, response: Response<TrackResponse>) {
+                        val searchRequest = spotifyService.searchTopTracks("Bearer $accessToken", query)
+                        searchRequest.enqueue(object : Callback<ArtistResponse> {
+                            override fun onResponse(call: Call<ArtistResponse>, response: Response<ArtistResponse>) {
+                                println(call)
                                 if (response.isSuccessful) {
                                     val trackResponse = response.body()
                                     val trackList = mutableListOf<Track>()
 
-                                    //println(trackResponse)
+                                    println(trackResponse)
 
-                                    if (trackResponse != null && trackResponse.tracks.items.isNotEmpty()) {
-
-                                        for (track in trackResponse.tracks.items){
+                                    if (trackResponse != null && trackResponse.tracks.isNotEmpty()) {
+                                        for (track in trackResponse.tracks){
 
                                             // Create a Track object and populate its properties
                                             val album = track.album
                                             val artists = track.artists
-                                            println(artists)
 
                                             val albumName = album.name
                                             val imageUrl = album.images[0].url
@@ -117,9 +102,6 @@ class SpotifyViewModel() :ViewModel() {
                                             )
 
                                             trackList.add(trackObject)
-
-                                            //println("Track: " + track.name)
-
                                         }
                                         _tracks.postValue(trackList)
 
@@ -133,7 +115,7 @@ class SpotifyViewModel() :ViewModel() {
                                 }
                             }
 
-                            override fun onFailure(call: Call<TrackResponse>, t: Throwable) {
+                            override fun onFailure(call: Call<ArtistResponse>, t: Throwable) {
                                 println(t)
                                 displayErrorMessage(t.message ?: "Error en la solicitud de búsqueda.")
                             }
@@ -153,34 +135,4 @@ class SpotifyViewModel() :ViewModel() {
         })
     }
 
-    fun addHistory(context: Context, query: String) {
-        initDatabase(context)
-        historyDAO.insert(Historial(null, query))
-    }
-
-    fun deleteHistoryItem(context: Context, entity: Historial){
-        initDatabase(context)
-        historyDAO.delete(entity)
-    }
-
-    fun getHistory(context: Context, text: String){
-        initDatabase(context)
-        _history.postValue(historyDAO.typeHistory(text))
-    }
-
-    private fun initDatabase(context: Context) {
-        historyDAO = AppDatabase.getInstance(context).historyDao()
-    }
-
 }
-
-/*
-
-    private fun displayTrackInfo(trackName: String, artistName: String) {
-        val message = "Canción encontrada: $trackName - $artistName"
-
-    }
-
-
-
- */

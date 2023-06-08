@@ -1,5 +1,4 @@
 package cr.una.ac.spotfy_sebas_edgar.entity
 
-data class Image(
-    val url: String
-)
+data class Cover (val url: String){
+}

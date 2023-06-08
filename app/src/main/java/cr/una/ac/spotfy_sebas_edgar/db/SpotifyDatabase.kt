@@ -4,32 +4,32 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import cr.una.ac.spotfy_sebas_edgar.DAO.HistorialDao
+import androidx.room.TypeConverters
+
+import cr.una.ac.spotfy_sebas_edgar.dao.HistoryDAO
+import cr.una.ac.spotfy_sebas_edgar.converters.Converters
 import cr.una.ac.spotfy_sebas_edgar.entity.Historial
-import kotlinx.coroutines.CoroutineScope
+
 
 @Database(entities = [Historial::class], version = 1)
-abstract class SpotifyDatabase : RoomDatabase() {
-    abstract fun historialDao(): HistorialDao
+@TypeConverters(Converters::class)
+abstract class AppDatabase : RoomDatabase() {
+    abstract fun historyDao(): HistoryDAO
 
     companion object {
-        @Volatile
-        private var INSTANCE: SpotifyDatabase? = null
+        private var instance: AppDatabase? = null
 
-        fun getDatabase(context: Context, scope: CoroutineScope): SpotifyDatabase {
-            val tempInstance = INSTANCE
-            if (tempInstance != null) {
-                return tempInstance
+        fun getInstance(context: Context): AppDatabase {
+            if (instance == null) {
+                synchronized(AppDatabase::class) {
+                    instance = Room.databaseBuilder(
+                        context.applicationContext,
+                        AppDatabase::class.java,
+                        "history-database"
+                    ).build()
+                }
             }
-            synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    SpotifyDatabase::class.java,
-                    "spotify_database"
-                ).build()
-                INSTANCE = instance
-                return instance
-            }
+            return instance!!
         }
     }
 }

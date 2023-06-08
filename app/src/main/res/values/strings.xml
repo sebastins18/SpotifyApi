@@ -43,6 +43,15 @@
         libero vel nunc consequat, quis tincidunt nisl eleifend. Cras bibendum enim a justo luctus
         vestibulum. Fusce dictum libero quis erat maximus, vitae volutpat diam dignissim.
     </string>
-    <string name="search_hint">search_hint</string>
-    <string name="search">search</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="sample_song_title">sample_song_title</string>
+    <string name="sample_artist_name">sample_artist_name</string>
+    <string name="song_image">song_image</string>
+    <string name="options_menu">options_menu</string>
+    <string name="options">options</string>
+    <string name="album_fragment_label">album_fragment_label</string>
+    <string name="artist_fragment_label">artist_fragment</string>
+    <string name="album">álbum</string>
+    <string name="space_date">__*__</string>
+    <string name="popularity">popularity</string>
 </resources>
