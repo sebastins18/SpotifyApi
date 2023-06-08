@@ -41,7 +41,7 @@
         android:id="@+id/text_top"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="TOP SONGS"
+        android:text="@string/top_10_songs"
         android:textSize="25sp"
         android:textStyle="bold"
         android:layout_marginStart="30dp"
@@ -55,19 +55,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="16dp"
+        android:layout_marginBottom="28dp"
         android:layout_below="@+id/text_top" />
 
-    <!-- Add the genres TextView below the layout_info RelativeLayout -->
-    <TextView
-        android:id="@+id/layout_genres"
+    <View
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:padding="16dp"
-        android:textColor="@android:color/white"
-        android:textSize="14sp"
+        android:layout_height="180dp"
         android:background="@color/black"
-        android:layout_below="@id/list_view_top"
-        android:layout_alignParentBottom="true" />
+        android:layout_marginTop="16dp"
+        android:layout_below="@id/list_view_top"/>
 
 </RelativeLayout>

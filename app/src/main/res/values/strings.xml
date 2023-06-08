@@ -54,4 +54,5 @@
     <string name="album">álbum</string>
     <string name="space_date">__*__</string>
     <string name="popularity">popularity</string>
+    <string name="top_10_songs">Top 10 Songs</string>
 </resources>

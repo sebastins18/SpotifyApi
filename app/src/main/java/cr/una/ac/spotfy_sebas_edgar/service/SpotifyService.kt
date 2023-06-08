@@ -28,7 +28,7 @@ interface SpotifyService {
         @Path("id") albumId: String
     ): Call<AlbumResponse>
 
-    @GET("v1/artists/{id}/top-tracks")
+    @GET("v1/artists/{id}/top-tracks?market=ES")
     fun searchTopTracks(
         @Header("Authorization") authorization: String,
         @Path("id") artistId: String,

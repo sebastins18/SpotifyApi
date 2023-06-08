@@ -42,7 +42,7 @@
     </fragment>
     <fragment
         android:id="@+id/ArtistFragment"
-        android:name="cr.ac.una.spotify_caleb_jeff.ArtistFragment"
+        android:name="cr.una.ac.spotfy_sebas_edgar.ArtistFragment"
         android:label="@string/artist_fragment_label"
         tools:layout="@layout/fragment_artist">
 

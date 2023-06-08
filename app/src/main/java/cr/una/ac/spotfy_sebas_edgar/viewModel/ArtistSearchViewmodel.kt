@@ -72,7 +72,7 @@ class ArtistSearchViewmodel: ViewModel() {
                         val searchRequest = spotifyService.searchTopTracks("Bearer $accessToken", query)
                         searchRequest.enqueue(object : Callback<ArtistResponse> {
                             override fun onResponse(call: Call<ArtistResponse>, response: Response<ArtistResponse>) {
-                                println(call)
+
                                 if (response.isSuccessful) {
                                     val trackResponse = response.body()
                                     val trackList = mutableListOf<Track>()
