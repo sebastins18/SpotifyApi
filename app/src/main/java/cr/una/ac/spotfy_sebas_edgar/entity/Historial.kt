@@ -5,7 +5,7 @@ import androidx.room.PrimaryKey
 
 @Entity
 data class Historial (@PrimaryKey(autoGenerate = true) val id: Long?,
-                      val song_name: String)
+                      val song_name: String,val _date: String )
 
 
 

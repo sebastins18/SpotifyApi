@@ -62,9 +62,19 @@ class SearchFragment : Fragment(), SpotifyAdapter.OnItemClickListener {
         val bundle = Bundle()
         println(track.artists)
         bundle.putString("artist", track.artists[0].id)
-        bundle.putString("artist_url", "https://i.scdn.co/image/ab67616d0000b273e55be22cd0085496fee07b29")
-        bundle.putString("artist_name", track.artists[0].name)
-        findNavController().navigate(R.id.action_searchFragment_to_ArtistFragment, bundle)
+        val viewModel = ViewModelProvider(this).get(SpotifyViewModel::class.java)
+
+
+        viewModel.getArtist(track.artists[0].id)
+
+
+        viewModel.artistImageUrl.observe(viewLifecycleOwner) { imageUrl ->
+            if (imageUrl != null) {
+                bundle.putString("artist_url", imageUrl)
+                bundle.putString("artist_name", track.artists[0].name)
+                findNavController().navigate(R.id.action_searchFragment_to_ArtistFragment, bundle)
+            }
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -80,7 +90,7 @@ class SearchFragment : Fragment(), SpotifyAdapter.OnItemClickListener {
         val historyView = view.findViewById<RecyclerView>(R.id.history_view)
 
         val adapter = SpotifyAdapter(tracks as ArrayList<Track>, requireContext()) { selectedItem ->
-            //
+
         }
 
         adapter.onItemClickListener = this
@@ -101,7 +111,6 @@ class SearchFragment : Fragment(), SpotifyAdapter.OnItemClickListener {
         }
 
         viewModel.history.observe(viewLifecycleOwner) { elementos ->
-            //order the elemenst from the most recent to the oldest
             elementos.sortedByDescending { it.id }
             historyAdapter.updateData(elementos as ArrayList<Historial>)
             history = elementos
@@ -110,16 +119,6 @@ class SearchFragment : Fragment(), SpotifyAdapter.OnItemClickListener {
         viewModel.errorMessage.observe(viewLifecycleOwner) { errorMessage ->
             Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_SHORT).show()
         }
-
-        //val menuButton = view.findViewById<ImageButton>(R.id.options_button)
-
-        /*
-        menuButton.setOnClickListener {
-            // Create a PopupMenu
-
-        }
-
-         */
 
         val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT) {
 

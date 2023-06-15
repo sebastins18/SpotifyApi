@@ -11,6 +11,7 @@ import cr.una.ac.spotfy_sebas_edgar.db.AppDatabase
 
 import cr.una.ac.spotfy_sebas_edgar.entity.AccessTokenResponse
 import cr.una.ac.spotfy_sebas_edgar.entity.Album
+import cr.una.ac.spotfy_sebas_edgar.entity.Artist
 import cr.una.ac.spotfy_sebas_edgar.entity.Cover
 import cr.una.ac.spotfy_sebas_edgar.entity.Historial
 import cr.una.ac.spotfy_sebas_edgar.entity.Track
@@ -24,6 +25,8 @@ import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 class SpotifyViewModel() :ViewModel() {
 
@@ -90,13 +93,13 @@ class SpotifyViewModel() :ViewModel() {
                                     val trackResponse = response.body()
                                     val trackList = mutableListOf<Track>()
 
-                                    //println(trackResponse)
+
 
                                     if (trackResponse != null && trackResponse.tracks.items.isNotEmpty()) {
 
                                         for (track in trackResponse.tracks.items){
 
-                                            // Create a Track object and populate its properties
+
                                             val album = track.album
                                             val artists = track.artists
                                             println(artists)
@@ -155,8 +158,12 @@ class SpotifyViewModel() :ViewModel() {
 
     fun addHistory(context: Context, query: String) {
         initDatabase(context)
-        historyDAO.insert(Historial(null, query))
+        val current = LocalDate.now()
+        val formatter = DateTimeFormatter.ofPattern("d MMMM, yyyy")
+        val date = current.format(formatter)
+        historyDAO.insert(Historial(null, query, date))
     }
+
 
     fun deleteHistoryItem(context: Context, entity: Historial){
         initDatabase(context)
@@ -171,8 +178,58 @@ class SpotifyViewModel() :ViewModel() {
     private fun initDatabase(context: Context) {
         historyDAO = AppDatabase.getInstance(context).historyDao()
     }
+    val artistImageUrl: MutableLiveData<String> = MutableLiveData()
 
+    fun getArtist(id: String){
+
+        val tokenRequest = getAccessToken()
+        tokenRequest.enqueue(object : Callback<AccessTokenResponse> {
+            override fun onResponse(call: Call<AccessTokenResponse>, response: Response<AccessTokenResponse>) {
+                if (response.isSuccessful) {
+                    val accessTokenResponse = response.body()
+                    val accessToken = accessTokenResponse?.accessToken
+
+                    if (accessToken != null) {
+
+                        val artistRequest = spotifyService.getArtist("Bearer $accessToken", id)
+                        artistRequest.enqueue(object : Callback<Artist> {
+                            override fun onResponse(call: Call<Artist>, response: Response<Artist>) {
+                                if (response.isSuccessful) {
+                                    val artistResponse = response.body()
+
+
+                                    val imageUrl = artistResponse?.images?.get(0)?.url
+
+
+                                    artistImageUrl.postValue(imageUrl ?: "")
+                                } else {
+                                    System.out.println("Mensaje:    "+response.raw())
+                                    displayErrorMessage("Error en la respuesta del servidor.")
+                                }
+                            }
+
+                            override fun onFailure(call: Call<Artist>, t: Throwable) {
+                                println(t)
+                                displayErrorMessage(t.message ?: "Error en la solicitud del artista.")
+                            }
+                        })
+                    } else {
+                        displayErrorMessage("Error al obtener el accessToken.")
+                    }
+                } else {
+                    System.out.println("Mensaje:    "+response.raw())
+                    displayErrorMessage("Error en la respuesta del servidor.")
+                }
+            }
+
+            override fun onFailure(call: Call<AccessTokenResponse>, t: Throwable) {
+                displayErrorMessage("Error en la solicitud de accessToken.")
+            }
+        })
+    }
 }
+
+
 
 /*
 
