@@ -29,9 +29,8 @@ import cr.una.ac.spotfy_sebas_edgar.adapter.TopTracksAdapter
 import cr.una.ac.spotfy_sebas_edgar.entity.Track
 import cr.una.ac.spotfy_sebas_edgar.viewModel.ArtistSearchViewmodel
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import android.media.AudioAttributes
+import android.media.MediaPlayer
 
 
 
@@ -55,6 +54,18 @@ class ArtistFragment : Fragment() {
 
     private lateinit var tracks: List<Track>
 
+    private val mediaPlayer = MediaPlayer()
+    private var isPlaying = false
+
+    private fun stopMusic() {
+        if (isPlaying) {
+            mediaPlayer.stop()
+            mediaPlayer.reset()
+            isPlaying = false
+        }
+    }
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
@@ -75,12 +86,47 @@ class ArtistFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Create a new instance of MediaPlayer
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_MEDIA)
+            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+            .build()
+        mediaPlayer.setAudioAttributes(audioAttributes)
+
         tracks = mutableListOf<Track>()
 
         val viewModel = ViewModelProvider(this).get(ArtistSearchViewmodel::class.java)
         val listView = view.findViewById<RecyclerView>(R.id.list_view_top)
         val adapter = TopTracksAdapter(tracks as ArrayList<Track>, requireContext()) { selectedItem ->
-            //
+
+            val previewUrl = selectedItem.preview_url
+
+            // Set a listener for when the media player is prepared
+            if (isPlaying) {
+                // Stop playing the demo
+                mediaPlayer.stop()
+                mediaPlayer.reset()
+                isPlaying = false
+
+            }else{
+
+                if(previewUrl.isNotEmpty()){
+                    // Set the data source to the previewUrl
+                    mediaPlayer.setDataSource(previewUrl)
+
+                    // Prepare the media player asynchronously
+                    mediaPlayer.prepareAsync()
+
+                    mediaPlayer.setOnPreparedListener {
+                        // Start playing the demo
+                        isPlaying = true
+                        mediaPlayer.start()
+                    }
+                }else{
+                    Toast.makeText(requireContext(), "Esta cancion no tiene demo", Toast.LENGTH_SHORT).show()
+                }
+            }
+
         }
 
         listView.adapter = adapter
@@ -96,17 +142,17 @@ class ArtistFragment : Fragment() {
         }
 
         artistId?.let {
-            viewModel.search(it) }
+            viewModel.search(it)
+            viewModel.getArtist(it)
+        }
 
         val cover = view.findViewById<ImageView>(R.id.image_album)
         val artist = view.findViewById<TextView>(R.id.text_artist_name)
         val progressBar = view.findViewById<ProgressBar>(R.id.loading_progress)
 
-        artistName?.let { artist.text = it }
-
-        artistUrl?.let {
-
-            Glide.with(view).load(artistUrl).listener(object: RequestListener<Drawable> {
+        viewModel.artistImage.observe(viewLifecycleOwner) { imageURL ->
+            println(imageURL)
+            Glide.with(view).load(imageURL).listener(object: RequestListener<Drawable> {
 
                 override fun onLoadFailed(
                     e: GlideException?,
@@ -128,7 +174,15 @@ class ArtistFragment : Fragment() {
             artistName?.let { cover.contentDescription = artistName }
         }
 
+
+
+        artistName?.let { artist.text = it }
+
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        stopMusic()
+    }
 
 }

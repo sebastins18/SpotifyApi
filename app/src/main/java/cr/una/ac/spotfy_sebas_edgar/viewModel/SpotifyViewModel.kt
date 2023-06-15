@@ -25,8 +25,8 @@ import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
+import java.util.Date
+
 
 class SpotifyViewModel() :ViewModel() {
 
@@ -93,13 +93,13 @@ class SpotifyViewModel() :ViewModel() {
                                     val trackResponse = response.body()
                                     val trackList = mutableListOf<Track>()
 
-
+                                    //println(trackResponse)
 
                                     if (trackResponse != null && trackResponse.tracks.items.isNotEmpty()) {
 
                                         for (track in trackResponse.tracks.items){
 
-
+                                            // Create a Track object and populate its properties
                                             val album = track.album
                                             val artists = track.artists
                                             println(artists)
@@ -111,11 +111,21 @@ class SpotifyViewModel() :ViewModel() {
                                             val cover = ArrayList<Cover>()
                                             cover.add(Cover(imageUrl))
 
+                                            var previewURL = track.preview_url
+
+                                            if(previewURL == null){
+                                                previewURL = ""
+                                                displayErrorMessage("Algunas canciones no tienen demos")
+                                            }
+
+                                            val previewUrl = track.preview_url ?: "https://p.scdn.co/mp3-preview/0f5b5b0b1b2b4b2f5b5b0b1b2b4b2f5b5b0b1b2b"
                                             val trackObject = Track(
+                                                track.id,
                                                 track.name,
                                                 Album(albumId, albumName, cover),
                                                 artists,
                                                 track.uri,
+                                                previewUrl,
                                                 track.popularity
                                             )
 
@@ -124,7 +134,8 @@ class SpotifyViewModel() :ViewModel() {
                                             //println("Track: " + track.name)
 
                                         }
-                                        _tracks.postValue(trackList)
+                                        val trackListLimpias = trackList.filter { it.name != null }.distinctBy { it.name }
+                                        _tracks.postValue(trackListLimpias)
 
                                     } else {
                                         displayErrorMessage("No se encontraron canciones.")
@@ -158,12 +169,9 @@ class SpotifyViewModel() :ViewModel() {
 
     fun addHistory(context: Context, query: String) {
         initDatabase(context)
-        val current = LocalDate.now()
-        val formatter = DateTimeFormatter.ofPattern("d MMMM, yyyy")
-        val date = current.format(formatter)
-        historyDAO.insert(Historial(null, query, date))
+        val currentDate = Date()
+        historyDAO.insert(Historial(null, query, currentDate))
     }
-
 
     fun deleteHistoryItem(context: Context, entity: Historial){
         initDatabase(context)
@@ -178,66 +186,5 @@ class SpotifyViewModel() :ViewModel() {
     private fun initDatabase(context: Context) {
         historyDAO = AppDatabase.getInstance(context).historyDao()
     }
-    val artistImageUrl: MutableLiveData<String> = MutableLiveData()
 
-    fun getArtist(id: String){
-
-        val tokenRequest = getAccessToken()
-        tokenRequest.enqueue(object : Callback<AccessTokenResponse> {
-            override fun onResponse(call: Call<AccessTokenResponse>, response: Response<AccessTokenResponse>) {
-                if (response.isSuccessful) {
-                    val accessTokenResponse = response.body()
-                    val accessToken = accessTokenResponse?.accessToken
-
-                    if (accessToken != null) {
-
-                        val artistRequest = spotifyService.getArtist("Bearer $accessToken", id)
-                        artistRequest.enqueue(object : Callback<Artist> {
-                            override fun onResponse(call: Call<Artist>, response: Response<Artist>) {
-                                if (response.isSuccessful) {
-                                    val artistResponse = response.body()
-
-
-                                    val imageUrl = artistResponse?.images?.get(0)?.url
-
-
-                                    artistImageUrl.postValue(imageUrl ?: "")
-                                } else {
-                                    System.out.println("Mensaje:    "+response.raw())
-                                    displayErrorMessage("Error en la respuesta del servidor.")
-                                }
-                            }
-
-                            override fun onFailure(call: Call<Artist>, t: Throwable) {
-                                println(t)
-                                displayErrorMessage(t.message ?: "Error en la solicitud del artista.")
-                            }
-                        })
-                    } else {
-                        displayErrorMessage("Error al obtener el accessToken.")
-                    }
-                } else {
-                    System.out.println("Mensaje:    "+response.raw())
-                    displayErrorMessage("Error en la respuesta del servidor.")
-                }
-            }
-
-            override fun onFailure(call: Call<AccessTokenResponse>, t: Throwable) {
-                displayErrorMessage("Error en la solicitud de accessToken.")
-            }
-        })
-    }
 }
-
-
-
-/*
-
-    private fun displayTrackInfo(trackName: String, artistName: String) {
-        val message = "Canción encontrada: $trackName - $artistName"
-
-    }
-
-
-
- */

@@ -1,32 +1,21 @@
 package cr.una.ac.spotfy_sebas_edgar.adapter
 
-import android.graphics.drawable.Drawable
+
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.ProgressBar
+
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
-import com.bumptech.glide.load.DataSource
-import com.bumptech.glide.load.engine.GlideException
-import com.bumptech.glide.request.RequestListener
-import com.bumptech.glide.request.target.Target
+
 
 import cr.una.ac.spotfy_sebas_edgar.R
 import cr.una.ac.spotfy_sebas_edgar.entity.Historial
 
-import cr.una.ac.spotfy_sebas_edgar.entity.Album
-import cr.una.ac.spotfy_sebas_edgar.entity.Artist
-import cr.una.ac.spotfy_sebas_edgar.entity.Cover
-
-import cr.una.ac.spotfy_sebas_edgar.entity.Track
 
 class HistorialAdapter(var history: ArrayList<Historial>, var onItemClick: (String) -> Unit) :
     RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private val VIEW_TYPE_ITEM = 0
-    //afectara?
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
 

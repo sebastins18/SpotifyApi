@@ -1,5 +1,6 @@
 package cr.una.ac.spotfy_sebas_edgar
 
+import android.content.ContentValues.TAG
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -28,6 +29,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+import android.media.AudioAttributes
+import android.media.MediaPlayer
+import android.util.Log
+
 /**
  * A simple [Fragment] subclass as the default destination in the navigation.
  */
@@ -41,6 +46,17 @@ class SearchFragment : Fragment(), SpotifyAdapter.OnItemClickListener {
     // onDestroyView.
     private val binding get() = _binding!!
 
+    private val mediaPlayer = MediaPlayer()
+    private var isPlaying = false
+
+    private fun stopMusic() {
+        if (isPlaying) {
+            mediaPlayer.stop()
+            mediaPlayer.reset()
+            isPlaying = false
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -51,30 +67,23 @@ class SearchFragment : Fragment(), SpotifyAdapter.OnItemClickListener {
 
     }
 
+
+
     override fun onViewAlbumClicked(track: Track) {
         //val albumFragment = AlbumFragment.newInstance(track.album.name)
+        //println(track)
         val bundle = Bundle()
         bundle.putString("album", track.album.id)
         findNavController().navigate(R.id.action_searchFragment_to_AlbumFragment, bundle)
     }
 
     override fun onViewArtistClicked(track: Track) {
+        //println(track)
         val bundle = Bundle()
-        println(track.artists)
         bundle.putString("artist", track.artists[0].id)
-        val viewModel = ViewModelProvider(this).get(SpotifyViewModel::class.java)
-
-
-        viewModel.getArtist(track.artists[0].id)
-
-
-        viewModel.artistImageUrl.observe(viewLifecycleOwner) { imageUrl ->
-            if (imageUrl != null) {
-                bundle.putString("artist_url", imageUrl)
-                bundle.putString("artist_name", track.artists[0].name)
-                findNavController().navigate(R.id.action_searchFragment_to_ArtistFragment, bundle)
-            }
-        }
+        bundle.putString("artist_url", "https://i.scdn.co/image/ab67616d0000b273e55be22cd0085496fee07b29")
+        bundle.putString("artist_name", track.artists[0].name)
+        findNavController().navigate(R.id.action_searchFragment_to_ArtistFragment, bundle)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -83,7 +92,16 @@ class SearchFragment : Fragment(), SpotifyAdapter.OnItemClickListener {
         tracks = mutableListOf<Track>()
         history = mutableListOf<Historial>()
 
+        // Create a new instance of MediaPlayer
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_MEDIA)
+            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+            .build()
+        mediaPlayer.setAudioAttributes(audioAttributes)
+
         val viewModel = ViewModelProvider(this).get(SpotifyViewModel::class.java)
+        //val playModel = ViewModelProvider(this).get(PlayViewModel::class.java)
+
         val searchField = view.findViewById<SearchView>(R.id.search_bar)
 
         val listView = view.findViewById<RecyclerView>(R.id.list_view)
@@ -91,7 +109,32 @@ class SearchFragment : Fragment(), SpotifyAdapter.OnItemClickListener {
 
         val adapter = SpotifyAdapter(tracks as ArrayList<Track>, requireContext()) { selectedItem ->
 
+            val previewUrl = selectedItem.preview_url
+
+            if (!previewUrl.isNullOrEmpty()) {
+                try {
+                    if (isPlaying) {
+                        mediaPlayer.stop()
+                        mediaPlayer.reset()
+                        isPlaying = false
+                    } else {
+                        mediaPlayer.setDataSource(previewUrl)
+                        mediaPlayer.prepareAsync()
+                        mediaPlayer.setOnPreparedListener {
+                            isPlaying = true
+                            mediaPlayer.start()
+                        }
+                    }
+                } catch (e: Exception) {
+                    // manejar la excepción aquí, como mostrar un mensaje de error al usuario
+                    Log.e(TAG, "Error al reproducir la vista previa: ${e.message}")
+                }
+            } else {
+                // manejar el caso en que la URL de vista previa es nula o está vacía
+                Log.w(TAG, "No hay vista previa disponible para esta canción.")
+            }
         }
+
 
         adapter.onItemClickListener = this
 
@@ -111,6 +154,7 @@ class SearchFragment : Fragment(), SpotifyAdapter.OnItemClickListener {
         }
 
         viewModel.history.observe(viewLifecycleOwner) { elementos ->
+            //order the elemenst from the most recent to the oldest
             elementos.sortedByDescending { it.id }
             historyAdapter.updateData(elementos as ArrayList<Historial>)
             history = elementos
@@ -119,6 +163,16 @@ class SearchFragment : Fragment(), SpotifyAdapter.OnItemClickListener {
         viewModel.errorMessage.observe(viewLifecycleOwner) { errorMessage ->
             Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_SHORT).show()
         }
+
+        //val menuButton = view.findViewById<ImageButton>(R.id.options_button)
+
+        /*
+        menuButton.setOnClickListener {
+            // Create a PopupMenu
+
+        }
+
+         */
 
         val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT) {
 
@@ -207,24 +261,19 @@ class SearchFragment : Fragment(), SpotifyAdapter.OnItemClickListener {
         searchField.setOnQueryTextFocusChangeListener { v, hasFocus ->
             if (hasFocus) {
                 println("Hi the history is visible")
-                lifecycleScope.launch {
-                    withContext(Dispatchers.IO) {
-                        viewModel.getHistory(requireContext(), "")
-                    }
-                }
-                historyView.visibility = View.VISIBLE
-            } else {
-                println("Hi the history is gone")
-                /*
                 val query = searchField.query.toString()
-                if (query != "") {
+                if (query.length > 5) {
                     lifecycleScope.launch {
                         withContext(Dispatchers.IO) {
-                            viewModel.addHistory(requireContext(), query)
+                            viewModel.getHistory(requireContext(), query)
                         }
                     }
+                    historyView.visibility = View.VISIBLE
+                } else {
+                    historyView.visibility = View.GONE
                 }
-                */
+            } else {
+                println("Hi the history is gone")
                 historyView.visibility = View.GONE
             }
         }
@@ -232,7 +281,6 @@ class SearchFragment : Fragment(), SpotifyAdapter.OnItemClickListener {
         searchField.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
 
             override fun onQueryTextSubmit(query: String): Boolean {
-
 
                 lifecycleScope.launch {
                     withContext(Dispatchers.IO) {
@@ -246,34 +294,37 @@ class SearchFragment : Fragment(), SpotifyAdapter.OnItemClickListener {
 
             override fun onQueryTextChange(newText: String): Boolean {
 
-                lifecycleScope.launch {
-                    withContext(Dispatchers.IO) {
-                        viewModel.getHistory(requireContext(), newText)
+                if (newText.length > 5) {
+                    lifecycleScope.launch {
+                        withContext(Dispatchers.IO) {
+                            viewModel.getHistory(requireContext(), newText)
+                        }
                     }
-                }
-
-                if (newText != "") {
                     viewModel.search(newText)
-                } else {
-                    //clean the list
+                    historyView.visibility = View.VISIBLE
+
+                } else if(newText.isEmpty()){
                     adapter.updateData(arrayListOf<Track>())
+                    historyView.visibility = View.GONE
+                } else {
+                    historyView.visibility = View.GONE
                 }
 
                 return false
             }
         })
 
-        /*
-        binding.buttonSecond.setOnClickListener {
 
-        }*/
 
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+        stopMusic()
+        mediaPlayer.release()
     }
+
 
 
 }

@@ -14,11 +14,15 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import cr.una.ac.spotfy_sebas_edgar.entity.AccessTokenResponse
 import cr.una.ac.spotfy_sebas_edgar.entity.Album
+import cr.una.ac.spotfy_sebas_edgar.entity.Artist
 import cr.una.ac.spotfy_sebas_edgar.entity.Cover
 import cr.una.ac.spotfy_sebas_edgar.entity.Track
 import cr.una.ac.spotfy_sebas_edgar.service.SpotifyService
 
 class ArtistSearchViewmodel: ViewModel() {
+
+    private var _artistImageUrl: MutableLiveData<String> = MutableLiveData()
+    val artistImage: LiveData<String> = _artistImageUrl
 
     private var _tracks: MutableLiveData<List<Track>> = MutableLiveData()
     var tracks : LiveData<List<Track>> = _tracks
@@ -58,6 +62,54 @@ class ArtistSearchViewmodel: ViewModel() {
         )
     }
 
+    fun getArtist(id: String){
+
+        val tokenRequest = getAccessToken()
+        tokenRequest.enqueue(object : Callback<AccessTokenResponse> {
+            override fun onResponse(call: Call<AccessTokenResponse>, response: Response<AccessTokenResponse>) {
+                if (response.isSuccessful) {
+                    val accessTokenResponse = response.body()
+                    val accessToken = accessTokenResponse?.accessToken
+
+                    if (accessToken != null) {
+
+                        val artistRequest = spotifyService.getArtist("Bearer $accessToken", id)
+                        artistRequest.enqueue(object : Callback<Artist> {
+                            override fun onResponse(call: Call<Artist>, response: Response<Artist>) {
+                                if (response.isSuccessful) {
+                                    val artistResponse = response.body()
+
+                                    // Aquí tendrías la url de la imagen del artista
+                                    val imageUrl = artistResponse?.images?.get(0)?.url
+
+                                    // Actualiza el valor de artistImageUrl
+                                    _artistImageUrl.postValue(imageUrl ?: "")
+                                } else {
+                                    System.out.println("Mensaje:    "+response.raw())
+                                    displayErrorMessage("Error en la respuesta del servidor.")
+                                }
+                            }
+
+                            override fun onFailure(call: Call<Artist>, t: Throwable) {
+                                println(t)
+                                displayErrorMessage(t.message ?: "Error en la solicitud del artista.")
+                            }
+                        })
+                    } else {
+                        displayErrorMessage("Error al obtener el accessToken.")
+                    }
+                } else {
+                    System.out.println("Mensaje:    "+response.raw())
+                    displayErrorMessage("Error en la respuesta del servidor.")
+                }
+            }
+
+            override fun onFailure(call: Call<AccessTokenResponse>, t: Throwable) {
+                displayErrorMessage("Error en la solicitud de accessToken.")
+            }
+        })
+    }
+
     fun search(query: String){
 
         val tokenRequest = getAccessToken()
@@ -77,8 +129,6 @@ class ArtistSearchViewmodel: ViewModel() {
                                     val trackResponse = response.body()
                                     val trackList = mutableListOf<Track>()
 
-                                    println(trackResponse)
-
                                     if (trackResponse != null && trackResponse.tracks.isNotEmpty()) {
                                         for (track in trackResponse.tracks){
 
@@ -90,14 +140,23 @@ class ArtistSearchViewmodel: ViewModel() {
                                             val imageUrl = album.images[0].url
                                             val albumId = album.id
 
+                                            var previewURL = track.preview_url
+
+                                            if(previewURL == null){
+                                                previewURL = ""
+                                                displayErrorMessage("Algunas canciones no tienen demos")
+                                            }
+
                                             val cover = ArrayList<Cover>()
                                             cover.add(Cover(imageUrl))
 
                                             val trackObject = Track(
+                                                track.id,
                                                 track.name,
                                                 Album(albumId, albumName, cover),
                                                 artists,
                                                 track.uri,
+                                                previewURL,
                                                 track.popularity
                                             )
 

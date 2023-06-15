@@ -8,8 +8,7 @@ import android.widget.ImageView
 import android.widget.PopupMenu
 import android.widget.ProgressBar
 import android.widget.TextView
-import android.widget.Toast
-import androidx.navigation.Navigation.findNavController
+
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
@@ -19,16 +18,15 @@ import com.bumptech.glide.request.target.Target
 
 import cr.una.ac.spotfy_sebas_edgar.entity.Track
 import cr.una.ac.spotfy_sebas_edgar.R
-import cr.una.ac.spotfy_sebas_edgar.entity.Album
-import cr.una.ac.spotfy_sebas_edgar.entity.Artist
-import cr.una.ac.spotfy_sebas_edgar.entity.Cover
+
 
 
 class SpotifyAdapter(var tracks: ArrayList<Track>, var context: android.content.Context,
                      var onItemClick: (Track) -> Unit) :
     RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private val VIEW_TYPE_ITEM = 0
-    //afectara?
+
+
 
     interface OnItemClickListener {
         fun onViewAlbumClicked(track: Track)
@@ -48,11 +46,36 @@ class SpotifyAdapter(var tracks: ArrayList<Track>, var context: android.content.
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+
+        var isPlaying = false
+
         if (holder is ViewHolder) {
+
+            fun startSong() {
+                // Start playing the demo track from Spotify API
+                // Update the state and UI accordingly
+                isPlaying = true
+                holder.playPauseButton.setImageResource(R.drawable.ic_pause_white)
+            }
+
+            fun pauseSong() {
+                // Pause the currently playing demo track from Spotify API
+                // Update the state and UI accordingly
+                isPlaying = false
+                holder.playPauseButton.setImageResource(R.drawable.ic_play_white)
+            }
+
             holder.bind(tracks[position])
+
             holder.itemView.setOnClickListener {
                 onItemClick(tracks[position])
+                if (isPlaying) {
+                    pauseSong()
+                } else {
+                    startSong()
+                }
             }
+
             holder.options.setOnClickListener {
                 onItemClickListener?.let { listener ->
                     val popupMenu = PopupMenu(context, holder.options)
@@ -77,7 +100,18 @@ class SpotifyAdapter(var tracks: ArrayList<Track>, var context: android.content.
                     popupMenu.show()
                 }
             }
+
+            // Set the initial state based on whether the track is currently playing
+            if (isPlaying) {
+                holder.playPauseButton.setImageResource(R.drawable.ic_pause_white)
+            } else {
+                holder.playPauseButton.setImageResource(R.drawable.ic_play_white)
+            }
+            holder.playPauseButton.visibility = View.VISIBLE
+
         }
+
+
     }
 
     override fun getItemCount(): Int {
@@ -96,6 +130,7 @@ class SpotifyAdapter(var tracks: ArrayList<Track>, var context: android.content.
         val loadingWheel = itemView.findViewById<ProgressBar>(R.id.loading_progress)
 
         val options = itemView.findViewById<ImageButton>(R.id.options_button)
+        val playPauseButton = itemView.findViewById<ImageButton>(R.id.play_pause_button)
 
         fun bind(track: Track) {
 

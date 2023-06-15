@@ -36,6 +36,8 @@ interface SpotifyService {
     ): Call<ArtistResponse>
 
     @GET("v1/artists/{id}")
-    fun getArtist(@Header("Authorization") authHeader: String, @Path("id") id: String): Call<Artist>
-
+    fun getArtist(
+        @Header("Authorization") authorization: String,
+        @Path("id") id: String
+    ): Call<Artist>
 }

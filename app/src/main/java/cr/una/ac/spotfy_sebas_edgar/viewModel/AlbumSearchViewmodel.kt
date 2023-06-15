@@ -93,16 +93,23 @@ class AlbumSearchViewmodel: ViewModel() {
                                                 val cover = ArrayList<Cover>()
                                                 cover.add(Cover(albumURL))
 
+                                                var previewURL = track.preview_url
+
+                                                if(track.preview_url == null){
+                                                    previewURL = ""
+                                                    displayErrorMessage("Algunas canciones no tienen demos")
+                                                }
+
                                                 val trackObject = Track(
+                                                    track.id,
                                                     track.name,
                                                     Album("", albumName, cover),
                                                     artists,
                                                     track.uri,
+                                                    previewURL,
                                                     track.popularity
                                                 )
-
                                                 trackList.add(trackObject)
-
                                             }
                                             _tracks.postValue(trackList)
 
@@ -143,14 +150,3 @@ class AlbumSearchViewmodel: ViewModel() {
     }
 
 }
-
-/*
-
-    private fun displayTrackInfo(trackName: String, artistName: String) {
-        val message = "Canción encontrada: $trackName - $artistName"
-
-    }
-
-
-
- */
